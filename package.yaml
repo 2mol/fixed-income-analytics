@@ -1,0 +1,18 @@
+name: fixed-income-analytics
+version: '0.1.0.0'
+category: Web
+author: Author name here
+maintainer: example@example.com
+copyright: 2017 Author name here
+license: BSD3
+homepage: https://github.com/githubuser/fixed-income-analytics#readme
+extra-source-files:
+- README.md
+dependencies:
+- base >=4.7 && <5
+- time >=1.6 && <2
+- containers >=0.5 && <1
+executables:
+  fixed-income-analytics:
+    main: Main.hs
+    source-dirs: src

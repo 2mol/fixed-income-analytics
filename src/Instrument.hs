@@ -9,13 +9,12 @@ import Data.Map (Map)
 data Currency = CHF | USD | EUR | CAD | JPY
     deriving (Eq, Show, Read)
 
-data CouponType = Fixed | Floating
-    deriving (Show)
+-- data CouponType = Fixed | Floating
+--     deriving (Show)
 
-newtype Coupon = Coupon Double
-    deriving (Show)
-    
-newtype ZSpread = ZSpread Double
+type CouponAmount = Double
+
+data Coupon = Fixed CouponAmount | Floating (Maybe CouponAmount)
     deriving (Show)
 
 data Frequency = Annual | SemiAnnual | Quarterly
@@ -32,38 +31,33 @@ data Maturity = Date Day | Perpetual
     deriving (Eq, Show)
 
 data BondDef = BondDef
-    { couponType :: CouponType
-    , coupon :: Coupon
+    { coupon :: Coupon
     , frequency :: Frequency
     , maturity :: Maturity
     , issueDate :: Maybe Day
-    , zSpread :: Double
+    -- , zSpread :: Double
     } deriving (Show)
 
 newtype Exposure = Exposure Double
 
 data Instrument
     = Bond BondDef
-    | BondFuture BondDef BondDef
-    | InterestRateSwap BondDef BondDef
-    | Composite [Instrument]
+    | Composite [(Exposure, Instrument)]
+    -- | BondFuture BondDef BondDef
+    -- | InterestRateSwap BondDef BondDef
+    -- | Composite [Instrument]
 
--- bondFromRawData :: Bla -> Bond
+--
 
--- data FixedBond = FixedBond
---     { coupon :: Double
---     , frequency :: Double
---     , maturity :: Day
---     , issueDate :: Maybe Day
---     }
+type ZSpread = Double
+type Price = Double
+type YieldToMaturity = Double
 
--- data FloatingBond = FloatingBond
---     { nextCoupon :: Maybe Double
---     , frequency :: Double
---     , maturity :: Day
---     , issueDate :: Maybe Day
---     }
-    
--- data BondInput = ...
+price :: BondDef -> ZSpread -> Price
+price = undefined
 
--- data Bond = FixedBond | FloatingBond
+yield :: BondDef -> ZSpread -> YieldToMaturity
+yield = undefined
+
+spread :: BondDef -> Price -> ZSpread
+spread = undefined
