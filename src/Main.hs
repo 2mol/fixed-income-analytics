@@ -1,9 +1,26 @@
 module Main where
 
-import qualified Instrument as I
+import qualified Data.Time as T
+import Text.Pretty.Simple (pPrint)
+
+import Instrument
+    ( BondDef(..)
+    , Coupon(..)
+    , Maturity(..)
+    )
 -- import qualified YieldCurve as Y
 
 main :: IO ()
 main = do
-  let c = I.Floating (Just 1) in
-    putStrLn $ show c
+    let
+        maturityDate = T.fromGregorian 2022 12 31
+        bond =
+            BondDef
+                { bId = 666
+                , coupon = Fixed 0.0125
+                , frequency = 2.0
+                , maturity = MaturityDate maturityDate
+                , issueDate = Nothing
+                , lastPaymentDate = Just maturityDate
+                }
+    pPrint bond

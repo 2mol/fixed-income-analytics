@@ -1,5 +1,3 @@
--- {-# LANGUAGE DuplicateRecordFields #-}
-
 module Instrument where
 
 import Data.Time (Day)
@@ -25,7 +23,6 @@ data Coupon = Fixed CouponAmount | Floating (Maybe CouponAmount)
 --     , (Quarterly, 4.0)
 --     ]
 
-
 data Maturity = MaturityDate Day | Perpetual
     deriving (Eq, Show)
 
@@ -36,17 +33,17 @@ data BondDef = BondDef
     , maturity :: Maturity
     , issueDate :: Maybe Day
     , lastPaymentDate :: Maybe Day
-    } deriving (Show)
+    } deriving Show
 
 data CashFlow = CashFlow
     { flowDate :: Day
     , nominalAmount :: Double
-    }
+    } deriving Show
 
 data KeyRateDuration = KeyRateDuration
     { tenor :: Double
     , krd :: Double
-    }
+    } deriving Show
 
 data AnalyzedBond = AnalyzedBond
     { aId :: Int
@@ -63,7 +60,7 @@ data AnalyzedBond = AnalyzedBond
     , creditDuration :: Double
     , durationToWorst :: Double
     , keyRateDurations :: [KeyRateDuration]
-    }
+    } deriving Show
 
 newtype Exposure = Exposure Double
 data PricingInfo = ZSpread Double | Price Double | YTM Double
