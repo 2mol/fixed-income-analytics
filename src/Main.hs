@@ -5,4 +5,5 @@ import qualified Instrument as I
 
 main :: IO ()
 main = do
-  putStrLn $ show I.CHF
+  let c = I.Floating (Just 1) in
+    putStrLn $ show c
