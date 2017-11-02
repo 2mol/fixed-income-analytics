@@ -1,14 +1,20 @@
 module Instrument where
 
-import Data.Time (Day)
+import Data.Time (Day, diffDays)--, NominalDiffTime)
+-- import qualified Data.Time as T
 -- import qualified Data.Map as Map
 -- import Data.Map (Map)
+import Data.Maybe (fromMaybe)
 
 type CouponAmount = Double
 type Frequency = Double
-type Price = Double
+type BondPrice = Double
 type Spread = Double
 type Yield = Double
+type Exposure = Double
+
+data Currency = CHF | USD | EUR | CAD | JPY
+    deriving (Eq, Show, Read)
 
 data Coupon = Fixed CouponAmount | Floating (Maybe CouponAmount)
     deriving (Show)
@@ -31,27 +37,28 @@ data BondDef = BondDef
     , coupon :: Coupon
     , frequency :: Frequency
     , maturity :: Maturity
-    , issueDate :: Maybe Day
-    , lastPaymentDate :: Maybe Day
+    , issue :: Maybe Day
+    , lastPayment :: Maybe Day
     } deriving Show
 
 data CashFlow = CashFlow
-    { flowDate :: Day
+    { approxFlowDate :: Day
+    , cTerm :: Integer -- or Double?
     , nominalAmount :: Double
+    , presentValue :: Double
     } deriving Show
 
+data CashFlows = CashFlows Day Exposure [CashFlow] deriving Show
+
 data KeyRateDuration = KeyRateDuration
-    { tenor :: Double
+    { kTerm :: Double
     , krd :: Double
     } deriving Show
 
 data AnalyzedBond = AnalyzedBond
     { aId :: Int
-    -- bondDef :: BondDef
-    -- , Principal
-    -- , Exposure
-    , cashFlows :: [CashFlow]
-    , price :: Price
+    , cashFlows :: CashFlows
+    , price :: BondPrice
     , zSpread :: Spread
     , ytm :: Yield
     , accruedInterest :: Double
@@ -62,22 +69,22 @@ data AnalyzedBond = AnalyzedBond
     , keyRateDurations :: [KeyRateDuration]
     } deriving Show
 
-newtype Exposure = Exposure Double
-data PricingInfo = ZSpread Double | Price Double | YTM Double
+data PricingInfo = ZSpread Spread | Price BondPrice | YTM Yield
 
 analyzeBond ::
     BondDef
-    -- -> Exposure
+    -> Day
+    -> Maybe Exposure
     -> Maybe PricingInfo
     -- -> YieldCurve
     -> AnalyzedBond
-analyzeBond bondDef pricigInfo =
+analyzeBond bondDef analysisDate mExposure mPricigInfo =
     let
         aCashFlows =
-            calcCashFlows bondDef
+            calcCashFlows bondDef analysisDate mExposure
 
         (aPrice, aZSpread, aytm) =
-            calcPricing bondDef pricigInfo
+            calcPricing bondDef mPricigInfo
     in
         AnalyzedBond
             { aId = bId bondDef
@@ -93,14 +100,52 @@ analyzeBond bondDef pricigInfo =
             , keyRateDurations = undefined
             }
 
-calcCashFlows :: BondDef -> [CashFlow]
-calcCashFlows = undefined
+calcFlowTerms :: Day -> Maybe Day -> Day -> Frequency -> [Double]
+calcFlowTerms analysisDate mIssueDate maturityDate freq =
+    if analysisDate > maturityDate  then
+        []
+    else
+        let
+            step =
+                1 / freq
 
-calcPricing :: BondDef -> Maybe PricingInfo -> (Price, Spread, Yield)
+            daysToMaturity =
+                diffDays maturityDate analysisDate
+
+            yearsToMaturity =
+                (fromIntegral daysToMaturity) / 365.12 :: Double
+
+            yearsToFirstFlow =
+                case mIssueDate of
+                    Nothing -> 0
+                    Just issueDate -> calcYearsToFirstFlow analysisDate issueDate
+
+        in
+            reverse [yearsToMaturity, yearsToMaturity - step .. yearsToFirstFlow]
+
+calcYearsToFirstFlow :: Day -> Day -> Double
+calcYearsToFirstFlow analysisDate issueDate =
+    let
+        daysToIssue =
+            diffDays issueDate analysisDate
+
+        yearsToIssue =
+            (fromIntegral daysToIssue) / 365.12 :: Double
+    in
+        max yearsToIssue 0
+
+calcCashFlows :: BondDef -> Day -> Maybe Exposure -> CashFlows
+calcCashFlows _ analysisDate mExposure =
+    let
+        exposure =
+            fromMaybe 1 mExposure
+    in
+        CashFlows analysisDate exposure []
+
+calcPricing :: BondDef -> Maybe PricingInfo -> (BondPrice, Spread, Yield)
 calcPricing = undefined
 
--- data Currency = CHF | USD | EUR | CAD | JPY
---     deriving (Eq, Show, Read)
+
 
 
 --

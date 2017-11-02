@@ -1,7 +1,8 @@
 module Main where
 
-import qualified Data.Time as T
 import Text.Pretty.Simple (pPrint)
+import Data.Time (fromGregorian)
+import Data.Time.Clock (getCurrentTime, utctDay)
 
 import Instrument
     ( BondDef(..)
@@ -12,15 +13,17 @@ import Instrument
 
 main :: IO ()
 main = do
-    let
-        maturityDate = T.fromGregorian 2022 12 31
+    now <- getCurrentTime
+    let today = utctDay now
+    putStrLn $ "today is: " ++ show today
+    let maturityDate = fromGregorian 2022 12 31
         bond =
             BondDef
-                { bId = 666
+                { bId = 0
                 , coupon = Fixed 0.0125
                 , frequency = 2.0
                 , maturity = MaturityDate maturityDate
-                , issueDate = Nothing
-                , lastPaymentDate = Just maturityDate
+                , issue = Nothing
+                , lastPayment = Just maturityDate
                 }
     pPrint bond
