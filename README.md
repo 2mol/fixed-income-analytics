@@ -4,4 +4,4 @@ Todo:
 =====
 
 - [ ] ieee754 float comparisons with Data.AEq (~==)
-- [ ] doctest
+- [ ] doctest (http://yannesposito.com/Scratch/en/blog/Haskell-Tutorials--a-tutorial/)
