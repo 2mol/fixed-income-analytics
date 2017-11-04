@@ -128,26 +128,17 @@ calcFlowTerms analysisDate mIssueDate maturityDate freq =
             yearsToMaturity =
                 (fromIntegral daysToMaturity) / const_YEAR_DAYS
 
-            yearsToLastPayment = yearsToMaturity
+            yearsToLastPayment =
+                yearsToMaturity
 
             yearsToFirstFlow =
                 case mIssueDate of
                     Nothing -> 0
-                    Just issueDate -> calcYearsToFirstFlow analysisDate issueDate
+                    Just issueDate ->
+                        (fromIntegral (diffDays issueDate analysisDate)) / const_YEAR_DAYS
 
             numberOfFlows =
                 floor $ (yearsToLastPayment - yearsToFirstFlow) * freq
-
-calcYearsToFirstFlow :: Day -> Day -> Double
-calcYearsToFirstFlow analysisDate issueDate =
-    let
-        daysToIssue =
-            diffDays issueDate analysisDate
-
-        yearsToIssue =
-            (fromIntegral daysToIssue) / const_YEAR_DAYS
-    in
-        max yearsToIssue 0
 
 -- calcCashFlows :: BondDef -> Day -> Maybe Exposure -> CashFlows
 -- calcCashFlows _ analysisDate mExposure =

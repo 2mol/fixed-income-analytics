@@ -28,7 +28,6 @@ tests:
     main: DocTest
     source-dirs:
     - test
-    - src
     dependencies:
     - doctest >=0.11 && <1
     - Glob
