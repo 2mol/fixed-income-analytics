@@ -6,7 +6,7 @@ import Data.Time.Clock (getCurrentTime, utctDay)
 
 import Instrument
     ( BondDef(..)
-    , Coupon(..)
+    , CouponDef(..)
     , Maturity(..)
     )
 -- import qualified YieldCurve as Y
@@ -21,12 +21,11 @@ vanillaBond :: BondDef
 vanillaBond =
     BondDef
         { bId = 0
-        , coupon = Fixed 0.0125
+        , couponInfo = Fixed 0.0125
         , frequency = 2.0
         , maturity = MaturityDate maturityDate
         , issue = Nothing
         , nextPayment = Nothing
-        , lastPayment = Just maturityDate
         }
 
 main :: IO ()
