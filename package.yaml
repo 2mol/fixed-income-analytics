@@ -1,11 +1,11 @@
 name: fixed-income-analytics
-version: '0.1.0.0'
-category: Web
-author: Author name here
+version: '0.0.0.1'
+category: Finance
+author: Juri Chomé
 maintainer: example@example.com
-copyright: 2017 Author name here
+copyright: 2017 Juri Chomé
 license: BSD3
-homepage: https://github.com/githubuser/fixed-income-analytics#readme
+homepage: https://github.com/talhoffer/fixed-income-analytics#readme
 extra-source-files:
 - README.md
 
