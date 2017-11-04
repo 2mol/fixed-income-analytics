@@ -20,7 +20,7 @@ dependencies:
 
 executables:
   fixed-income-analytics:
-    main: Main
+    main: Main.hs
     source-dirs: src
 
 tests:

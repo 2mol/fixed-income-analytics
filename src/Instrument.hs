@@ -1,6 +1,14 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Instrument where
 
-import Data.Time (Day, diffDays)--, NominalDiffTime)
+import Data.Time
+    ( Day
+    , diffDays
+    , addDays
+    , addGregorianYearsClip
+    )
+
 -- import qualified Data.Time as T
 -- import qualified Data.Map as Map
 -- import Data.Map (Map)
@@ -8,6 +16,19 @@ import Data.Time (Day, diffDays)--, NominalDiffTime)
 
 -- $setup
 -- >>> import Data.Time (fromGregorian)
+-- :{
+-- maturityDate = fromGregorian 2022 12 31
+-- vanillaBond =
+--     BondDef
+--         { bId = 0
+--         , coupon = Fixed 0.0125
+--         , frequency = 2.0
+--         , maturity = MaturityDate maturityDate
+--         , issue = Nothing
+--         , nextPayment = Nothing
+--         , lastPayment = Just maturityDate
+--         }
+-- :}
 
 type CouponAmount = Double
 type Frequency = Double
@@ -15,6 +36,9 @@ type BondPrice = Double
 type Spread = Double
 type Yield = Double
 type Exposure = Double
+type YearDelta = Double
+
+-- newtype TestYD = TestYD Double deriving Num
 
 const_YEAR_DAYS :: Double
 const_YEAR_DAYS = 365.2422
@@ -35,7 +59,7 @@ data Coupon = Fixed CouponAmount | Floating (Maybe CouponAmount)
 --     , (Quarterly, 4.0)
 --     ]
 
-data Maturity = MaturityDate Day | Perpetual
+data Maturity = MaturityDate Day | Perpetual (Maybe Day)
     deriving (Eq, Show)
 
 data BondDef = BondDef
@@ -44,17 +68,19 @@ data BondDef = BondDef
     , frequency :: Frequency
     , maturity :: Maturity
     , issue :: Maybe Day
+    , nextPayment :: Maybe Day
     , lastPayment :: Maybe Day
     } deriving Show
 
 data CashFlow = CashFlow
     { approxFlowDate :: Day
-    , cTerm :: Integer -- or Double?
+    , cTerm :: Integer
     , nominalAmount :: Double
     , presentValue :: Double
     } deriving Show
 
-data CashFlows = CashFlows Day Exposure [CashFlow] deriving Show
+-- data CashFlows = CashFlows Day Exposure [CashFlow] deriving Show
+type CashFlows = [CashFlow]
 
 data KeyRateDuration = KeyRateDuration
     { kTerm :: Double
@@ -77,90 +103,108 @@ data AnalyzedBond = AnalyzedBond
 
 data PricingInfo = ZSpread Spread | Price BondPrice | YTM Yield
 
-analyzeBond ::
-    BondDef
-    -> Day
-    -> Maybe Exposure
-    -> Maybe PricingInfo
-    -- -> YieldCurve
-    -> AnalyzedBond
-analyzeBond bondDef analysisDate mExposure mPricigInfo =
-    let
-        -- aCashFlows =
-        --     calcCashFlows bondDef analysisDate mExposure
+-- analyzeBond ::
+--     BondDef
+--     -> Day
+--     -> Maybe Exposure
+--     -> Maybe PricingInfo
+--     -- -> YieldCurve
+--     -> AnalyzedBond
+-- analyzeBond bondDef analysisDate mExposure mPricigInfo =
+--     let
+--         (aPrice, aZSpread, aytm) =
+--             undefined bondDef mPricigInfo
+--     in
+--         AnalyzedBond
+--             { aId = bId bondDef
+--             , cashFlows = undefined
+--             , price = aPrice
+--             , zSpread = aZSpread
+--             , ytm = aytm
+--             , accruedInterest = undefined
+--             , cleanPrice = undefined
+--             , fisherWeilDuration = undefined
+--             , creditDuration = undefined
+--             , durationToWorst = undefined
+--             , keyRateDurations = undefined
+--             }
 
-        (aPrice, aZSpread, aytm) =
-            calcPricing bondDef mPricigInfo
-    in
-        AnalyzedBond
-            { aId = bId bondDef
-            , cashFlows = undefined
-            , price = aPrice
-            , zSpread = aZSpread
-            , ytm = aytm
-            , accruedInterest = undefined
-            , cleanPrice = undefined
-            , fisherWeilDuration = undefined
-            , creditDuration = undefined
-            , durationToWorst = undefined
-            , keyRateDurations = undefined
-            }
--- | My function description
+-- | Calculates the time from the analysisDate to each cashflow.
+-- Term refers to the timespan, measured in years.
 --
--- >>> calcFlowTerms (fromGregorian 2017 11 4) Nothing (fromGregorian 2017 11 4) 1
+-- >>> calcFlowTerms vanillaBond (fromGregorian 2022 12 31)
 -- [0.0]
 --
--- >>> calcFlowTerms (fromGregorian 2017 11 4) Nothing (fromGregorian 2017 11 3) 1
+-- >>> calcFlowTerms vanillaBond (fromGregorian 2023 1 1)
 -- []
-calcFlowTerms :: Day -> Maybe Day -> Day -> Frequency -> [Double]
-calcFlowTerms analysisDate mIssueDate maturityDate freq =
-    if analysisDate > maturityDate  then
-        []
-    else
-        scanl (-) yearsToLastPayment (take numberOfFlows (repeat yearsBetweenFlows))
-        where
-            yearsBetweenFlows =
-                1 / freq
+calcFlowTerms :: BondDef -> Day -> [Double]
+calcFlowTerms BondDef{..} analysisDate =
+    let
+        yearsBetweenFlows =
+            1 / frequency
 
-            daysToMaturity =
-                diffDays maturityDate analysisDate
+        yearsToMaturity =
+            case maturity of
+                MaturityDate day ->
+                    dateDelta analysisDate day
+                Perpetual _ ->
+                    666
 
-            yearsToMaturity =
-                (fromIntegral daysToMaturity) / const_YEAR_DAYS
+        lowerBound =
+            case issue of
+                Nothing -> 0
+                Just issueDate ->
+                    max (dateDelta analysisDate issueDate) 0
 
-            yearsToLastPayment =
-                yearsToMaturity
+        numberOfFlows =
+            floor $ (yearsToMaturity - lowerBound) * frequency
+    in
+        if yearsToMaturity < 0 then
+            []
+        else
+            scanl (-) yearsToMaturity (take numberOfFlows (repeat yearsBetweenFlows))
 
-            yearsToFirstFlow =
-                case mIssueDate of
-                    Nothing -> 0
-                    Just issueDate ->
-                        (fromIntegral (diffDays issueDate analysisDate)) / const_YEAR_DAYS
+daysToYears :: Integer -> YearDelta
+daysToYears = (/const_YEAR_DAYS) . fromIntegral
 
-            numberOfFlows =
-                floor $ (yearsToLastPayment - yearsToFirstFlow) * freq
+dateDelta :: Day -> Day -> YearDelta
+dateDelta date1 date2 =
+    daysToYears $ diffDays date2 date1
 
--- calcCashFlows :: BondDef -> Day -> Maybe Exposure -> CashFlows
--- calcCashFlows _ analysisDate mExposure =
---     let
---         exposure =
---             fromMaybe 1 mExposure
---     in
---         CashFlows analysisDate exposure []
+calcFlowDay :: Day -> YearDelta -> Day
+calcFlowDay analysisDate term = addDays (round term) analysisDate
 
-calcPricing :: BondDef -> Maybe PricingInfo -> (BondPrice, Spread, Yield)
-calcPricing = undefined
+-- data BondDef = BondDef
+-- { bId :: Int
+-- , coupon :: Coupon
+-- , frequency :: Frequency
+-- , maturity :: Maturity
+-- , issue :: Maybe Day
+-- , nextPayment :: Maybe Day
+-- , lastPayment :: Maybe Day
+-- } deriving Show
+
+calcCashFlows :: BondDef -> Day -> CashFlows
+calcCashFlows BondDef{..} analysisDate =
+    let
+        maturityDate =
+            case maturity of
+                MaturityDate day -> day
+                Perpetual (Just nextPaymentDay) -> addGregorianYearsClip 1000 analysisDate
+
+        terms =
+            calcFlowTerms BondDef{..} analysisDate
+
+        dates =
+            map (calcFlowDay analysisDate) terms
+
+        tuples =
+            zip3
+    in
+        undefined
 
 
 
 
---
-
--- price :: BondDef -> ZSpread -> Price
--- price = undefined
-
--- yield :: BondDef -> ZSpread -> YieldToMaturity
--- yield = undefined
-
--- spread :: BondDef -> Price -> ZSpread
--- spread = undefined
+-- calcPricing :: BondDef -> Maybe PricingInfo -> (BondPrice, Spread, Yield)
+-- calcPricing = undefined
