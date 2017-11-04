@@ -8,12 +8,27 @@ license: BSD3
 homepage: https://github.com/githubuser/fixed-income-analytics#readme
 extra-source-files:
 - README.md
+
+ghc-options: -Wall
+
 dependencies:
 - base >=4.7 && <5
 - time >=1.6 && <2
 - containers >=0.5 && <1
-- pretty-simple >=2 && <3
+- pretty-simple >=2.0 && <3
+- ieee754 >=0.8 && <1
+
 executables:
   fixed-income-analytics:
-    main: Main.hs
+    main: Main
     source-dirs: src
+
+tests:
+  doctest:
+    main: DocTest
+    source-dirs:
+    - test
+    - src
+    dependencies:
+    - doctest >=0.11 && <1
+    - Glob

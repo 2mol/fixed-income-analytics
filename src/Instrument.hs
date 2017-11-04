@@ -4,7 +4,10 @@ import Data.Time (Day, diffDays)--, NominalDiffTime)
 -- import qualified Data.Time as T
 -- import qualified Data.Map as Map
 -- import Data.Map (Map)
-import Data.Maybe (fromMaybe)
+-- import Data.Maybe (fromMaybe)
+
+-- $setup
+-- >>> import Data.Time (fromGregorian)
 
 type CouponAmount = Double
 type Frequency = Double
@@ -12,6 +15,9 @@ type BondPrice = Double
 type Spread = Double
 type Yield = Double
 type Exposure = Double
+
+const_YEAR_DAYS :: Double
+const_YEAR_DAYS = 365.2422
 
 data Currency = CHF | USD | EUR | CAD | JPY
     deriving (Eq, Show, Read)
@@ -80,15 +86,15 @@ analyzeBond ::
     -> AnalyzedBond
 analyzeBond bondDef analysisDate mExposure mPricigInfo =
     let
-        aCashFlows =
-            calcCashFlows bondDef analysisDate mExposure
+        -- aCashFlows =
+        --     calcCashFlows bondDef analysisDate mExposure
 
         (aPrice, aZSpread, aytm) =
             calcPricing bondDef mPricigInfo
     in
         AnalyzedBond
             { aId = bId bondDef
-            , cashFlows = aCashFlows
+            , cashFlows = undefined
             , price = aPrice
             , zSpread = aZSpread
             , ytm = aytm
@@ -99,29 +105,38 @@ analyzeBond bondDef analysisDate mExposure mPricigInfo =
             , durationToWorst = undefined
             , keyRateDurations = undefined
             }
-
+-- | My function description
+--
+-- >>> calcFlowTerms (fromGregorian 2017 11 4) Nothing (fromGregorian 2017 11 4) 1
+-- [0.0]
+--
+-- >>> calcFlowTerms (fromGregorian 2017 11 4) Nothing (fromGregorian 2017 11 3) 1
+-- []
 calcFlowTerms :: Day -> Maybe Day -> Day -> Frequency -> [Double]
 calcFlowTerms analysisDate mIssueDate maturityDate freq =
     if analysisDate > maturityDate  then
         []
     else
-        let
-            step =
+        scanl (-) yearsToLastPayment (take numberOfFlows (repeat yearsBetweenFlows))
+        where
+            yearsBetweenFlows =
                 1 / freq
 
             daysToMaturity =
                 diffDays maturityDate analysisDate
 
             yearsToMaturity =
-                (fromIntegral daysToMaturity) / 365.12 :: Double
+                (fromIntegral daysToMaturity) / const_YEAR_DAYS
+
+            yearsToLastPayment = yearsToMaturity
 
             yearsToFirstFlow =
                 case mIssueDate of
                     Nothing -> 0
                     Just issueDate -> calcYearsToFirstFlow analysisDate issueDate
 
-        in
-            reverse [yearsToMaturity, yearsToMaturity - step .. yearsToFirstFlow]
+            numberOfFlows =
+                floor $ (yearsToLastPayment - yearsToFirstFlow) * freq
 
 calcYearsToFirstFlow :: Day -> Day -> Double
 calcYearsToFirstFlow analysisDate issueDate =
@@ -130,17 +145,17 @@ calcYearsToFirstFlow analysisDate issueDate =
             diffDays issueDate analysisDate
 
         yearsToIssue =
-            (fromIntegral daysToIssue) / 365.12 :: Double
+            (fromIntegral daysToIssue) / const_YEAR_DAYS
     in
         max yearsToIssue 0
 
-calcCashFlows :: BondDef -> Day -> Maybe Exposure -> CashFlows
-calcCashFlows _ analysisDate mExposure =
-    let
-        exposure =
-            fromMaybe 1 mExposure
-    in
-        CashFlows analysisDate exposure []
+-- calcCashFlows :: BondDef -> Day -> Maybe Exposure -> CashFlows
+-- calcCashFlows _ analysisDate mExposure =
+--     let
+--         exposure =
+--             fromMaybe 1 mExposure
+--     in
+--         CashFlows analysisDate exposure []
 
 calcPricing :: BondDef -> Maybe PricingInfo -> (BondPrice, Spread, Yield)
 calcPricing = undefined
