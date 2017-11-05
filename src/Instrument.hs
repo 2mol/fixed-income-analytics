@@ -22,7 +22,6 @@ import Numeric (showFFloat)
 --         , frequency = 2.0
 --         , maturity = MaturityDate maturityDate
 --         , issue = Nothing
---         , nextPayment = Nothing
 --         }
 -- :}
 
@@ -52,8 +51,9 @@ data BondDef = BondDef
     , frequency :: Frequency
     , maturity :: Maturity
     , issue :: Maybe Day
-    , nextPayment :: Maybe Day
     } deriving Show
+
+--
 
 data CashFlow = CashFlow
     { cTerm :: YearDelta
@@ -64,7 +64,7 @@ data CashFlow = CashFlow
 
 instance Show CashFlow where
     show CashFlow{..} =
-        show approxFlowDate ++ " ~ " ++ nom ++ ", PV: " ++ pv
+        show approxFlowDate ++ " ~ " ++ nom ++ " ~ PV: " ++ pv
         where
             nom = showFFloat (Just 2) nominalAmount ""
             pv = showFFloat (Just 2) presentValue ""
@@ -73,16 +73,10 @@ data CashFlows = CashFlows Day Principal [CashFlow]
 
 instance Show CashFlows where
     show (CashFlows ad principal cfs) =
-        "Analysis Date: " ++ show ad ++ "\n"
-        ++ "Principal: " ++ show principal ++ "\n"
-        ++ flows
-        where
-            flows =
-                if null cfs then
-                    "No flows from analysis date onwards\n"
-                else
-                    concatMap (\c -> show c ++ "\n") cfs
-
+        "\nAnalysis Date: " ++ show ad
+        ++ "\nPrincipal: " ++ show principal
+        ++ "\nFlows:"
+        ++ show cfs
 
 data KeyRateDuration = KeyRateDuration
     { kTerm :: Double
@@ -108,18 +102,18 @@ data PricingInfo = ZSpread Spread | Price BondPrice | YTM Yield
 analyzeBond ::
     BondDef
     -> Day
-    -> Maybe Principal
+    -> Principal
     -> Maybe PricingInfo
     -- -> YieldCurve
     -> AnalyzedBond
-analyzeBond bondDef analysisDate mPrincipal mPricigInfo =
+analyzeBond bondDef analysisDate principal mPricigInfo =
     let
         (aPrice, aZSpread, aytm) =
             undefined bondDef mPricigInfo
     in
         AnalyzedBond
             { aId = bId bondDef
-            , cashFlows = calcCashFlows bondDef analysisDate
+            , cashFlows = calcCashFlows bondDef principal analysisDate
             , price = aPrice
             , zSpread = aZSpread
             , ytm = aytm
@@ -195,11 +189,11 @@ scaleCashFlow principal cf@CashFlow {nominalAmount = nom, presentValue = pv} =
     where
         principalF = fromIntegral principal
 
-calcCashFlows :: BondDef -> Day -> CashFlows
-calcCashFlows BondDef{..} analysisDate =
+calcCashFlows :: BondDef -> Principal -> Day -> CashFlows
+calcCashFlows bond@BondDef{..} principal analysisDate =
     let
         terms =
-            calcFlowTerms BondDef{..} analysisDate
+            calcFlowTerms bond analysisDate
 
         dates =
             map (calcFlowDay analysisDate) terms
@@ -217,16 +211,10 @@ calcCashFlows BondDef{..} analysisDate =
         cashFlowList =
             zipWith4 CashFlow terms dates nominalValues presentValues
 
-        principal = 100
-
         scaledCashFlowList =
             map (scaleCashFlow principal) cashFlowList
     in
-        -- CashFlow <$> terms <*> dates <*> nominalValues <*> presentValues
         CashFlows analysisDate principal scaledCashFlowList
-
-
-
 
 -- calcPricing :: BondDef -> Maybe PricingInfo -> (BondPrice, Spread, Yield)
 -- calcPricing = undefined

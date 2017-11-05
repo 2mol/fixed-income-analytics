@@ -8,6 +8,7 @@ import Instrument
     ( BondDef(..)
     , CouponDef(..)
     , Maturity(..)
+    , calcCashFlows
     )
 -- import qualified YieldCurve as Y
 
@@ -25,7 +26,6 @@ vanillaBond =
         , frequency = 2.0
         , maturity = MaturityDate maturityDate
         , issue = Nothing
-        , nextPayment = Nothing
         }
 
 main :: IO ()
@@ -33,15 +33,6 @@ main = do
     now <- getCurrentTime
     let today = utctDay now
     putStrLn $ "today is: " ++ show today
-    -- let maturityDate = fromGregorian 2022 12 31
-    --     bond =
-    --         BondDef
-    --             { bId = 0
-    --             , coupon = Fixed 0.0125
-    --             , frequency = 2.0
-    --             , maturity = MaturityDate maturityDate
-    --             , issue = Nothing
-    --             , nextPayment = Nothing
-    --             , lastPayment = Just maturityDate
-    --             }
     pPrint vanillaBond
+    let cashFlows = calcCashFlows vanillaBond 100 today
+    pPrint cashFlows
