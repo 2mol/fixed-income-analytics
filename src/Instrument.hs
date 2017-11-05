@@ -2,12 +2,13 @@
 
 module Instrument where
 
-import Data.List (zipWith4)
+import Data.List (zipWith4, intersperse)
 import Data.Time
     ( Day
     , diffDays
     , addDays
     )
+import Numeric (showFFloat)
 
 -- | Set up some data for DocTest
 -- $setup
@@ -30,7 +31,7 @@ type Frequency = Double
 type BondPrice = Double
 type Spread = Double
 type Yield = Double
-type Exposure = Double
+type Principal = Int
 type YearDelta = Double
 
 constYEARDAYS :: Double
@@ -59,10 +60,29 @@ data CashFlow = CashFlow
     , approxFlowDate :: Day
     , nominalAmount :: Double
     , presentValue :: Double
-    } deriving Show
+    }
 
--- data CashFlows = CashFlows Day Exposure [CashFlow] deriving Show
-type CashFlows = [CashFlow]
+instance Show CashFlow where
+    show CashFlow{..} =
+        (show approxFlowDate) ++ " nom: " ++ amnt ++ " pv: " ++ pv
+        where
+            amnt = '~' : showFFloat (Just 2) nominalAmount ""
+            pv = '~' : showFFloat (Just 2) presentValue ""
+
+data CashFlows = CashFlows Day Principal [CashFlow]
+
+instance Show CashFlows where
+    show (CashFlows ad principal cfs) =
+        "Analysis Date: " ++ (show ad) ++ "\n"
+        ++ "Principal: " ++ (show principal) ++ "\n"
+        ++ flows
+        where
+            flows =
+                if length cfs == 0 then
+                    "No flows from analysis date onwards\n"
+                else
+                    concatMap (\c -> show c ++ "\n") cfs
+
 
 data KeyRateDuration = KeyRateDuration
     { kTerm :: Double
@@ -88,11 +108,11 @@ data PricingInfo = ZSpread Spread | Price BondPrice | YTM Yield
 analyzeBond ::
     BondDef
     -> Day
-    -> Maybe Exposure
+    -> Maybe Principal
     -> Maybe PricingInfo
     -- -> YieldCurve
     -> AnalyzedBond
-analyzeBond bondDef analysisDate mExposure mPricigInfo =
+analyzeBond bondDef analysisDate mPrincipal mPricigInfo =
     let
         (aPrice, aZSpread, aytm) =
             undefined bondDef mPricigInfo
@@ -146,7 +166,7 @@ calcFlowTerms BondDef{..} analysisDate =
         if yearsToMaturity < 0 then
             []
         else
-            scanl (-) yearsToMaturity (replicate numberOfFlows yearsBetweenFlows)
+            reverse $ scanl (-) yearsToMaturity (replicate numberOfFlows yearsBetweenFlows)
 
 daysToYears :: Integer -> YearDelta
 daysToYears = (/constYEARDAYS) . fromIntegral
@@ -169,6 +189,12 @@ calcFixedCouponAmounts coupon n =
     else
         replicate (n - 1) coupon ++ [1 + coupon]
 
+scaleCashFlow :: Principal -> CashFlow -> CashFlow
+scaleCashFlow principal (CashFlow term flowDay nominal pv) =
+    CashFlow term flowDay (nominal * principalF) (pv * principalF)
+    where
+        principalF = fromIntegral principal
+
 calcCashFlows :: BondDef -> Day -> CashFlows
 calcCashFlows BondDef{..} analysisDate =
     let
@@ -187,9 +213,17 @@ calcCashFlows BondDef{..} analysisDate =
 
         presentValues =
             repeat 0 -- TODO
+
+        cashFlowList =
+            zipWith4 CashFlow terms dates nominalValues presentValues
+
+        principal = 100
+
+        scaledCashFlowList =
+            map (scaleCashFlow principal) cashFlowList
     in
         -- CashFlow <$> terms <*> dates <*> nominalValues <*> presentValues
-        zipWith4 CashFlow terms dates nominalValues presentValues
+        CashFlows analysisDate principal scaledCashFlowList
 
 
 
