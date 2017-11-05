@@ -33,8 +33,8 @@ type Yield = Double
 type Exposure = Double
 type YearDelta = Double
 
-const_YEAR_DAYS :: Double
-const_YEAR_DAYS = 365.2422
+constYEARDAYS :: Double
+constYEARDAYS = 365.2422
 
 data Currency = CHF | USD | EUR | CAD | JPY
     deriving (Eq, Show, Read)
@@ -99,7 +99,7 @@ analyzeBond bondDef analysisDate mExposure mPricigInfo =
     in
         AnalyzedBond
             { aId = bId bondDef
-            , cashFlows = undefined
+            , cashFlows = calcCashFlows bondDef analysisDate
             , price = aPrice
             , zSpread = aZSpread
             , ytm = aytm
@@ -146,10 +146,10 @@ calcFlowTerms BondDef{..} analysisDate =
         if yearsToMaturity < 0 then
             []
         else
-            scanl (-) yearsToMaturity (take numberOfFlows (repeat yearsBetweenFlows))
+            scanl (-) yearsToMaturity (replicate numberOfFlows yearsBetweenFlows)
 
 daysToYears :: Integer -> YearDelta
-daysToYears = (/const_YEAR_DAYS) . fromIntegral
+daysToYears = (/constYEARDAYS) . fromIntegral
 
 dateDelta :: Day -> Day -> YearDelta
 dateDelta date1 date2 =
@@ -160,32 +160,14 @@ calcFlowDay analysisDate term =
     addDays days analysisDate
     where
         days =
-            round $ term * const_YEAR_DAYS
-
--- data BondDef = BondDef
--- { bId :: Int
--- , coupon :: Coupon
--- , frequency :: Frequency
--- , maturity :: Maturity
--- , issue :: Maybe Day
--- , nextPayment :: Maybe Day
--- } deriving Show
-
-calcCouponAmounts :: CouponDef -> [YearDelta] -> [CouponAmount]
-calcCouponAmounts couponInfo terms =
-    case couponInfo of
-        Fixed coupon ->
-            calcFixedCouponAmounts coupon (length terms)
-        -- Floating mNextCouponAmount ->
-        Floating _ ->
-            undefined
+            round $ term * constYEARDAYS
 
 calcFixedCouponAmounts :: CouponAmount -> Int -> [CouponAmount]
 calcFixedCouponAmounts coupon n =
     if n <= 0 then
         []
     else
-        take (n-1) (repeat coupon) ++ [1 + coupon]
+        replicate (n - 1) coupon ++ [1 + coupon]
 
 calcCashFlows :: BondDef -> Day -> CashFlows
 calcCashFlows BondDef{..} analysisDate =
@@ -197,10 +179,14 @@ calcCashFlows BondDef{..} analysisDate =
             map (calcFlowDay analysisDate) terms
 
         nominalValues =
-            calcCouponAmounts couponInfo terms
+            case couponInfo of
+                Fixed coupon ->
+                    calcFixedCouponAmounts coupon (length terms)
+                Floating _ ->
+                    undefined
 
         presentValues =
-            take (length terms) (repeat 0.0)
+            repeat 0 -- TODO
     in
         -- CashFlow <$> terms <*> dates <*> nominalValues <*> presentValues
         zipWith4 CashFlow terms dates nominalValues presentValues
