@@ -2,7 +2,7 @@
 
 module Instrument where
 
-import Data.List (zipWith4, intersperse)
+import Data.List (zipWith4)
 import Data.Time
     ( Day
     , diffDays
@@ -64,21 +64,21 @@ data CashFlow = CashFlow
 
 instance Show CashFlow where
     show CashFlow{..} =
-        (show approxFlowDate) ++ " nom: " ++ amnt ++ " pv: " ++ pv
+        show approxFlowDate ++ " ~ " ++ nom ++ ", PV: " ++ pv
         where
-            amnt = '~' : showFFloat (Just 2) nominalAmount ""
-            pv = '~' : showFFloat (Just 2) presentValue ""
+            nom = showFFloat (Just 2) nominalAmount ""
+            pv = showFFloat (Just 2) presentValue ""
 
 data CashFlows = CashFlows Day Principal [CashFlow]
 
 instance Show CashFlows where
     show (CashFlows ad principal cfs) =
-        "Analysis Date: " ++ (show ad) ++ "\n"
-        ++ "Principal: " ++ (show principal) ++ "\n"
+        "Analysis Date: " ++ show ad ++ "\n"
+        ++ "Principal: " ++ show principal ++ "\n"
         ++ flows
         where
             flows =
-                if length cfs == 0 then
+                if null cfs then
                     "No flows from analysis date onwards\n"
                 else
                     concatMap (\c -> show c ++ "\n") cfs
@@ -190,8 +190,8 @@ calcFixedCouponAmounts coupon n =
         replicate (n - 1) coupon ++ [1 + coupon]
 
 scaleCashFlow :: Principal -> CashFlow -> CashFlow
-scaleCashFlow principal (CashFlow term flowDay nominal pv) =
-    CashFlow term flowDay (nominal * principalF) (pv * principalF)
+scaleCashFlow principal cf@CashFlow {nominalAmount = nom, presentValue = pv} =
+    cf {nominalAmount = nom * principalF, presentValue = pv * principalF}
     where
         principalF = fromIntegral principal
 
