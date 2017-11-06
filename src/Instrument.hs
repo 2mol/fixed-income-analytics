@@ -34,7 +34,7 @@ type Principal = Int
 type YearDelta = Double
 
 constYEARDAYS :: Double
-constYEARDAYS = 365.2422
+constYEARDAYS = 365.24219
 
 data Currency = CHF | USD | EUR | CAD | JPY
     deriving (Eq, Show, Read)

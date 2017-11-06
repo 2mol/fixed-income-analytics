@@ -11,7 +11,5 @@ data YieldDataPoint = YieldDataPoint
 
 type YieldCurve = Tenor -> Yield
 
-data InterpolationType = Linear | Quadratic
-
-interpolateYieldCurve :: InterpolationType -> [YieldDataPoint] -> YieldCurve
+interpolateYieldCurve :: [YieldDataPoint] -> YieldCurve
 interpolateYieldCurve = undefined
