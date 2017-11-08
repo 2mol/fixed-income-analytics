@@ -72,8 +72,8 @@ instance Show CashFlow where
 data CashFlows = CashFlows Day Principal [CashFlow]
 
 instance Show CashFlows where
-    show (CashFlows ad principal cfs) =
-        "\nAnalysis Date: " ++ show ad
+    show (CashFlows aDate principal cfs) =
+        "\nAnalysis Date: " ++ show aDate
         ++ "\nPrincipal: " ++ show principal
         ++ "\nFlows:"
         ++ show cfs
@@ -218,3 +218,15 @@ calcCashFlows bond@BondDef{..} principal analysisDate =
 
 -- calcPricing :: BondDef -> Maybe PricingInfo -> (BondPrice, Spread, Yield)
 -- calcPricing = undefined
+
+--
+
+data YieldInfo = YieldInfo
+    { tenor :: YearDelta
+    , yield :: Yield
+    } deriving (Show)
+
+type YieldCurve = YearDelta -> Yield
+
+interpolateYieldCurve :: [YieldInfo] -> YieldCurve
+interpolateYieldCurve = undefined
