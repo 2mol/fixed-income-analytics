@@ -29,7 +29,11 @@ executable fixed-income-analytics
     , containers >=0.5 && <1
     , pretty-simple >=2.0 && <3
     , ieee754 >=0.8 && <1
+    , cassava >=0.4 && <1
+    , bytestring >=0.10 && <1
+    , vector >=0.12 && <1
   other-modules:
+      CsvLoader
       Instrument
 
 test-suite doctest
@@ -44,6 +48,9 @@ test-suite doctest
     , containers >=0.5 && <1
     , pretty-simple >=2.0 && <3
     , ieee754 >=0.8 && <1
+    , cassava >=0.4 && <1
+    , bytestring >=0.10 && <1
+    , vector >=0.12 && <1
     , doctest >=0.11 && <1
     , Glob
   other-modules:

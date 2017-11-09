@@ -1,0 +1,3 @@
+bId,couponInfo,frequency,maturity,issue
+1,Fixed 0.0125,2,MaturityDate 2022/12/31,Nothing
+2,Fixed 0,1,MaturityDate 2022/12/31,Nothing

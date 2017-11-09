@@ -7,10 +7,9 @@ import Data.Time.Clock (getCurrentTime, utctDay)
 import Instrument
     ( BondDef(..)
     , CouponDef(..)
-    , Maturity(..)
     , calcCashFlows
     )
--- import qualified YieldCurve as Y
+-- import qualified CsvLoader as C
 
 maturityDate :: Day
 maturityDate = fromGregorian 2022 12 31
@@ -24,15 +23,21 @@ vanillaBond =
         { bId = 0
         , couponInfo = Fixed 0.0125
         , frequency = 2.0
-        , maturity = MaturityDate maturityDate
+        , maturity = maturityDate
         , issue = Nothing
         }
 
-main :: IO ()
-main = do
+cashFlowTest :: IO ()
+cashFlowTest = do
     now <- getCurrentTime
     let today = utctDay now
     putStrLn $ "today is: " ++ show today
     pPrint vanillaBond
     let cashFlows = calcCashFlows vanillaBond 100 today
     pPrint cashFlows
+
+-- csvTest = C.main
+
+main :: IO ()
+main = do
+    cashFlowTest

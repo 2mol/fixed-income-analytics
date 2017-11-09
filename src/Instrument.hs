@@ -1,7 +1,11 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE RecordWildCards #-}
+
+-- later: GeneralisedNewtypeDeriving
 
 module Instrument where
 
+import GHC.Generics (Generic)
 import Data.List (zipWith4)
 import Data.Time
     ( Day
@@ -20,7 +24,7 @@ import Numeric (showFFloat)
 --         { bId = 0
 --         , couponInfo = Fixed 0.0125
 --         , frequency = 2.0
---         , maturity = MaturityDate maturityDate
+--         , maturity = maturityDate
 --         , issue = Nothing
 --         }
 -- :}
@@ -40,18 +44,18 @@ data Currency = CHF | USD | EUR | CAD | JPY
     deriving (Eq, Show, Read)
 
 data CouponDef = Fixed CouponAmount | Floating (Maybe CouponAmount)
-    deriving (Show)
+    deriving (Show, Generic)
 
-data Maturity = MaturityDate Day | Perpetual (Maybe Day)
-    deriving (Eq, Show)
+-- data Maturity = MaturityDate Day | Perpetual (Maybe Day)
+--     deriving (Eq, Show)
 
 data BondDef = BondDef
     { bId :: Int
     , couponInfo :: CouponDef
     , frequency :: Frequency
-    , maturity :: Maturity
+    , maturity :: Day
     , issue :: Maybe Day
-    } deriving Show
+    } deriving (Generic, Show)
 
 --
 
@@ -142,11 +146,7 @@ calcFlowTerms BondDef{..} analysisDate =
             1 / frequency
 
         yearsToMaturity =
-            case maturity of
-                MaturityDate day ->
-                    dateDelta analysisDate day
-                Perpetual _ ->
-                    666
+            dateDelta analysisDate maturity
 
         lowerBound =
             case issue of
@@ -177,11 +177,11 @@ calcFlowDay analysisDate term =
             round $ term * constYEARDAYS
 
 calcFixedCouponAmounts :: CouponAmount -> Int -> [CouponAmount]
-calcFixedCouponAmounts coupon n =
-    if n <= 0 then
+calcFixedCouponAmounts coupon numberOfFlows =
+    if numberOfFlows <= 0 then
         []
     else
-        replicate (n - 1) coupon ++ [1 + coupon]
+        replicate numberOfFlows coupon ++ [1]
 
 scaleCashFlow :: Principal -> CashFlow -> CashFlow
 scaleCashFlow principal cf@CashFlow {nominalAmount = nom, presentValue = pv} =
