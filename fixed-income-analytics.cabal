@@ -32,9 +32,11 @@ executable fixed-income-analytics
     , cassava >=0.4 && <1
     , bytestring >=0.10 && <1
     , vector >=0.12 && <1
+    , yaml >=0.8 && <1
   other-modules:
       CsvLoader
       Instrument
+      Instrument2
 
 test-suite doctest
   type: exitcode-stdio-1.0
@@ -51,6 +53,7 @@ test-suite doctest
     , cassava >=0.4 && <1
     , bytestring >=0.10 && <1
     , vector >=0.12 && <1
+    , yaml >=0.8 && <1
     , doctest >=0.11 && <1
     , Glob
   other-modules:

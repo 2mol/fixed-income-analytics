@@ -4,7 +4,7 @@ import Text.Pretty.Simple (pPrint)
 import Data.Time (Day, fromGregorian)
 import Data.Time.Clock (getCurrentTime, utctDay)
 
-import Instrument
+import InstrumentOld
     ( BondDef(..)
     , CouponDef(..)
     , calcCashFlows

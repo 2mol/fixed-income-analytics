@@ -1,9 +1,8 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE RecordWildCards #-}
+-- {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
--- later: GeneralisedNewtypeDeriving
-
-module Instrument where
+module InstrumentOld where
 
 import GHC.Generics (Generic)
 import Data.List (zipWith4)
@@ -37,6 +36,14 @@ type Yield = Double
 type Principal = Int
 type YearDelta = Double
 
+-- newtype CouponAmount = CouponAmount { unCouponAmount :: Double } deriving (Show, Num)
+-- newtype Frequency = Frequency { unFrequency :: Double } deriving (Show, Num)
+-- newtype BondPrice = BondPrice { unBondPrice :: Double } deriving (Show, Num)
+-- newtype Spread = Spread { unSpread :: Double } deriving (Show, Num)
+-- newtype Yield = Yield { unYield :: Double } deriving (Show, Num)
+-- newtype Principal = Principal { unPrincipal :: Int } deriving (Show, Num)
+-- newtype YearDelta = YearDelta { unYearDelta :: Double } deriving (Show, Num)
+
 constYEARDAYS :: Double
 constYEARDAYS = 365.24219
 
@@ -67,7 +74,7 @@ data CashFlow = CashFlow
     }
 
 instance Show CashFlow where
-    show CashFlow{..} =
+    show CashFlow {..} =
         show approxFlowDate ++ " ~ " ++ nom ++ " ~ PV: " ++ pv
         where
             nom = showFFloat (Just 2) nominalAmount ""
@@ -140,7 +147,7 @@ analyzeBond bondDef analysisDate principal mPricigInfo =
 -- >>> calcFlowTerms vanillaBond (fromGregorian 2023 1 1)
 -- []
 calcFlowTerms :: BondDef -> Day -> [YearDelta]
-calcFlowTerms BondDef{..} analysisDate =
+calcFlowTerms BondDef {..} analysisDate =
     let
         yearsBetweenFlows =
             1 / frequency
@@ -190,7 +197,7 @@ scaleCashFlow principal cf@CashFlow {nominalAmount = nom, presentValue = pv} =
         principalF = fromIntegral principal
 
 calcCashFlows :: BondDef -> Principal -> Day -> CashFlows
-calcCashFlows bond@BondDef{..} principal analysisDate =
+calcCashFlows bond@BondDef {..} principal analysisDate =
     let
         terms =
             calcFlowTerms bond analysisDate

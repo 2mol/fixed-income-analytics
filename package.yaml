@@ -20,6 +20,7 @@ dependencies:
 - cassava >=0.4 && <1
 - bytestring >=0.10 && <1
 - vector >=0.12 && <1
+- yaml >=0.8 && <1
 
 executables:
   fixed-income-analytics:

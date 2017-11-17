@@ -8,8 +8,8 @@ import qualified Data.Vector as V
 import Data.Time (Day, fromGregorian, defaultTimeLocale)
 -- import Data.Text (Text)
 
-import qualified Instrument as I
-import Instrument (BondDef)
+import qualified InstrumentOld as I
+import InstrumentOld (BondDef)
 
 -- data Person = Person
 --     { name   :: !String
@@ -27,8 +27,6 @@ instance FromNamedRecord BondDef
 
 instance FromField I.CouponDef --where
     -- parseField r = I.Fixed <$> r .: "Coupon"
-
-instance FromField I.Maturity
 
 instance FromField Day
 
@@ -49,5 +47,6 @@ main = do
     csvData <- BL.readFile "bonds2.csv"
     case decodeByName csvData of
         Left err -> putStrLn err
-        Right (_, v) -> V.forM_ v $ \ b ->
-            putStrLn $ show (b :: BondDef)--(I.bId b) ++ " earns " ++ show (I.frequency b) ++ " dollars"
+        Right (_, v) ->
+            V.forM_ v $ \ b ->
+                putStrLn $ show (b :: BondDef)--(I.bId b) ++ " earns " ++ show (I.frequency b) ++ " dollars"
