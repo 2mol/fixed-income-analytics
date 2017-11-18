@@ -35,8 +35,9 @@ executable fixed-income-analytics
     , yaml >=0.8 && <1
   other-modules:
       CsvLoader
-      Instrument
-      Instrument2
+      Instrument.Bond
+      Instrument.CashFlow
+      InstrumentOld
 
 test-suite doctest
   type: exitcode-stdio-1.0
