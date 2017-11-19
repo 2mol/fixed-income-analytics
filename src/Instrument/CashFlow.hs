@@ -2,8 +2,7 @@
 
 module Instrument.CashFlow where
 
-import Data.Time (Day, addDays, diffDays)
--- import Data.List (zipWith4)
+import Data.Time (Day, diffDays)
 import Instrument.Bond
     ( BondDef(..)
     , CouponDef(..)
@@ -23,22 +22,28 @@ constYEARDAYS = 365.24219
 
 calcFlowStream :: BondDef -> Day -> CashFlows
 calcFlowStream bond@BondDef{..} analysisDate =
-    CashFlows analysisDate principal $ calcFlows bond analysisDate
+    let
+        couponTerms =
+            calcTerms bond analysisDate
 
-calcFlows :: BondDef -> Day -> [CashFlow]
-calcFlows
+        flows =
+            case couponInfo of
+                Fixed coupon ->
+                    calcFixedFlows coupon couponTerms maturityDate analysisDate
+                Floating _ ->
+                    undefined
+    in
+        CashFlows analysisDate principal flows
+
+calcTerms :: BondDef -> Day -> [Double]
+calcTerms
     BondDef
-        { maturityDate = maturityDate
-        , frequency = frequency
+        { frequency = frequency
         , lastPaymentDate = lastPaymentDate
         , mIssueDate = mIssueDate
-        , couponInfo = couponInfo
         }
     analysisDate =
     let
-        yearsToMaturity =
-            dateDelta analysisDate maturityDate
-
         yearsToLastPayment =
             dateDelta analysisDate lastPaymentDate
 
@@ -53,95 +58,29 @@ calcFlows
 
         yearsBetweenFlows =
             1 / frequency
+    in
+        scanl (-) yearsToLastPayment (replicate numberOfFlows yearsBetweenFlows)
 
-        terms =
-            scanl (-) yearsToLastPayment (replicate numberOfFlows yearsBetweenFlows)
+calcFixedFlows :: Double -> [Double] -> Day -> Day -> [CashFlow]
+calcFixedFlows coupon couponTerms maturityDate analysisDate =
+    let
+        yearsToMaturity =
+            dateDelta analysisDate maturityDate
 
         coupons =
-            case couponInfo of
-                Fixed coupon ->
-                    calcFixedCoupons coupon terms
-                Floating _ ->
-                    undefined
+            map (const coupon) couponTerms
 
         presentValues =
             repeat 667 -- TODO
 
-        couponPayments =
-            zipWith3 CashFlow terms coupons presentValues
-
         principalRedemption =
             CashFlow yearsToMaturity 1 666
+
+        couponPayments =
+            zipWith3 CashFlow couponTerms coupons presentValues
     in
         principalRedemption : couponPayments
 
--- calcFlowsOld :: BondDef -> Day -> [CashFlow]
--- calcFlowsOld bond@BondDef{..} analysisDate =
---     let
---         terms =
---             calcFlowTermsOld bond analysisDate
-
---         coupons =
---             case couponInfo of
---                 Fixed coupon ->
---                     calcFixedCoupons coupon terms
---                 Floating _ ->
---                     undefined
-
---         payments = map (*principal) coupons
-
---         presentValues =
---             repeat 0 -- TODO
---     in
---         zipWith3 CashFlow terms payments presentValues
-        -- CashFlow <$> terms <$> dates <$> payments <$> presentValues
-
--- helper functions:
-
--- calcFlowTermsOld :: BondDef -> Day -> [Double]
--- calcFlowTermsOld BondDef{..} analysisDate =
---     let
---         yearsBetweenFlows =
---             1 / frequency
-
---         yearsToMaturity =
---             dateDelta analysisDate maturityDate
-
---         yearsToLastPayment =
---             dateDelta analysisDate lastPaymentDate
-
---         firstPaymentLowerBound =
---             case mIssueDate of
---                 Nothing -> 0
---                 Just issueDate ->
---                     max (dateDelta analysisDate issueDate) 0
-
---         numberOfFlows =
---             floor $ (yearsToLastPayment - firstPaymentLowerBound) * frequency
-
---         couponTerms =
---             scanl (-) yearsToLastPayment (replicate numberOfFlows yearsBetweenFlows)
---     in
---         yearsToMaturity : couponTerms
-
 dateDelta :: Day -> Day -> Double
 dateDelta date1 date2 =
-    -- dayDeltaToYearDelta $ diffDays date2 date1
     fromIntegral (diffDays date2 date1) / constYEARDAYS
-
--- dayDeltaToYearDelta :: Integer -> Double
--- dayDeltaToYearDelta = (/constYEARDAYS) . fromIntegral
-
--- calcFlowDate :: Day -> Double -> Day
--- calcFlowDate analysisDate term =
---     let
---         daysDelta = round (term * constYEARDAYS)
---     in
---         addDays daysDelta analysisDate
-
-calcFixedCoupons :: Double -> [a] -> [Double]
-calcFixedCoupons coupon terms = map (const coupon) terms ++ [1]
-
--- scale :: Double -> CashFlow -> CashFlow
--- scale scaleFactor cashFlow@CashFlow {nominalAmount = nom, presentValue = pv} =
---     cashFlow {nominalAmount = nom * scaleFactor, presentValue = pv * scaleFactor}
