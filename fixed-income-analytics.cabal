@@ -34,10 +34,11 @@ executable fixed-income-analytics
     , vector >=0.12 && <1
     , yaml >=0.8 && <1
   other-modules:
-      CsvLoader
-      Instrument.Bond
-      Instrument.CashFlow
+      Bond
+      CashFlow
       InstrumentOld
+      Types
+      YieldCurve
 
 test-suite doctest
   type: exitcode-stdio-1.0

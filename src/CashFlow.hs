@@ -3,6 +3,7 @@
 module CashFlow where
 
 import Data.Time (Day, addDays, diffDays)
+import Types
 import Bond
     ( BondDef(..)
     , CouponDef(..)
@@ -10,15 +11,15 @@ import Bond
 import YieldCurve (YieldCurve)
 
 data CashFlow = CashFlow
-    { term :: Double
+    { term :: YearDelta
     -- , approxFlowDate :: Day
-    , nominalAmount :: Double
-    , presentValue :: Double
+    , nominalAmount :: CashNominal
+    , presentValue :: CashPV
     } deriving Show
 
 data CashFlows = CashFlows
     { analysisDate :: Day
-    , principal :: Double
+    , principal :: CashNominal
     , flows :: [CashFlow]
     } deriving Show
 
@@ -30,11 +31,10 @@ calcFlowStream bond@BondDef{..} analysisDate yieldCurve =
 
         flows =
             calcFlows couponInfo couponTerms maturityDate analysisDate yieldCurve
-
     in
         CashFlows analysisDate principal flows
 
-calcTerms :: BondDef -> Day -> [Double]
+calcTerms :: BondDef -> Day -> [YearDelta]
 calcTerms
     BondDef
         { frequency = frequency
@@ -48,19 +48,19 @@ calcTerms
 
         firstPaymentLowerBound =
             case mIssueDate of
-                Nothing -> 0
+                Nothing -> YearDelta 0
                 Just issueDate ->
                     max (dateDelta analysisDate issueDate) 0
 
         numberOfFlows =
-            floor $ (yearsToLastPayment - firstPaymentLowerBound) * frequency
+            floor $ unYearDelta (yearsToLastPayment - firstPaymentLowerBound) * frequency
 
         yearsBetweenFlows =
-            1 / frequency
+            YearDelta $ 1 / frequency
     in
         scanl (-) yearsToLastPayment (replicate numberOfFlows yearsBetweenFlows)
 
-calcFlows :: CouponDef -> [Double] -> Day -> Day -> YieldCurve -> [CashFlow]
+calcFlows :: CouponDef -> [YearDelta] -> Day -> Day -> YieldCurve -> [CashFlow]
 calcFlows couponInfo couponTerms maturityDate analysisDate yieldCurve =
     let
         yearsToMaturity =
@@ -71,7 +71,7 @@ calcFlows couponInfo couponTerms maturityDate analysisDate yieldCurve =
                 Fixed coupon ->
                     map (const coupon) couponTerms
                 Floating _ ->
-                    calcForwardRates couponTerms yieldCurve
+                    calcFloatingCoupons couponTerms yieldCurve
 
         principalRedemption =
             CashFlow yearsToMaturity 1 666
@@ -84,20 +84,19 @@ calcFlows couponInfo couponTerms maturityDate analysisDate yieldCurve =
     in
         principalRedemption : couponPayments
 
-calcForwardRates :: [Double] -> YieldCurve -> [Double]
-calcForwardRates couponTerms yieldCurve =
-    undefined
+calcFloatingCoupons :: a
+calcFloatingCoupons = undefined
 
 constYEARDAYS :: Double
 constYEARDAYS = 365.24219
 
-dateDelta :: Day -> Day -> Double
+dateDelta :: Day -> Day -> YearDelta
 dateDelta date1 date2 =
-    fromIntegral (diffDays date2 date1) / constYEARDAYS
+    YearDelta $ fromIntegral (diffDays date2 date1) / constYEARDAYS
 
-calcFlowDay :: Day -> Double -> Day
+calcFlowDay :: Day -> YearDelta -> Day
 calcFlowDay analysisDate term =
     let
-        days = round $ term * constYEARDAYS
+        days = round $ (unYearDelta term) * constYEARDAYS
     in
         addDays days analysisDate
