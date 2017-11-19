@@ -2,7 +2,7 @@
 
 module CashFlow where
 
-import Data.Time (Day, diffDays)
+import Data.Time (Day, addDays, diffDays)
 import Bond
     ( BondDef(..)
     , CouponDef(..)
@@ -28,14 +28,9 @@ calcFlowStream bond@BondDef{..} analysisDate yieldCurve =
         couponTerms =
             calcTerms bond analysisDate
 
-        undiscountedFlows =
-            case couponInfo of
-                Fixed coupon ->
-                    calcFixedFlows coupon couponTerms maturityDate analysisDate
-                Floating _ ->
-                    undefined
+        flows =
+            calcFlows couponInfo couponTerms maturityDate analysisDate yieldCurve
 
-        flows = map ($ 666) undiscountedFlows
     in
         CashFlows analysisDate principal flows
 
@@ -65,22 +60,33 @@ calcTerms
     in
         scanl (-) yearsToLastPayment (replicate numberOfFlows yearsBetweenFlows)
 
-calcFixedFlows :: Double -> [Double] -> Day -> Day -> [Double -> CashFlow]
-calcFixedFlows coupon couponTerms maturityDate analysisDate =
+calcFlows :: CouponDef -> [Double] -> Day -> Day -> YieldCurve -> [CashFlow]
+calcFlows couponInfo couponTerms maturityDate analysisDate yieldCurve =
     let
         yearsToMaturity =
             dateDelta analysisDate maturityDate
 
         coupons =
-            map (const coupon) couponTerms
+            case couponInfo of
+                Fixed coupon ->
+                    map (const coupon) couponTerms
+                Floating _ ->
+                    calcForwardRates couponTerms yieldCurve
 
         principalRedemption =
-            CashFlow yearsToMaturity 1
+            CashFlow yearsToMaturity 1 666
+
+        presentValues =
+            undefined
 
         couponPayments =
-            zipWith CashFlow couponTerms coupons
+            zipWith3 CashFlow couponTerms coupons presentValues
     in
         principalRedemption : couponPayments
+
+calcForwardRates :: [Double] -> YieldCurve -> [Double]
+calcForwardRates couponTerms yieldCurve =
+    undefined
 
 constYEARDAYS :: Double
 constYEARDAYS = 365.24219
@@ -88,3 +94,10 @@ constYEARDAYS = 365.24219
 dateDelta :: Day -> Day -> Double
 dateDelta date1 date2 =
     fromIntegral (diffDays date2 date1) / constYEARDAYS
+
+calcFlowDay :: Day -> Double -> Day
+calcFlowDay analysisDate term =
+    let
+        days = round $ term * constYEARDAYS
+    in
+        addDays days analysisDate
