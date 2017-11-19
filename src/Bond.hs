@@ -2,7 +2,7 @@
 -- {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 -- {-# LANGUAGE OverloadedStrings #-}
 
-module Instrument.Bond where
+module Bond where
 
 -- import Data.Text (Text)
 import qualified Data.Map as M
@@ -25,7 +25,7 @@ data MinimalBondDef = MinimalBondDef
     { xxcouponInfo :: CouponDef
     , xxfrequency :: Double
     , xxmaturityDate :: Day
-    , xxissueDate :: Maybe Day
+    -- , xxissueDate :: Maybe Day
     } deriving Show
 
 fromList :: [(String, String)] -> BondDef

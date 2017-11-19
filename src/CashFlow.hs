@@ -1,12 +1,13 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Instrument.CashFlow where
+module CashFlow where
 
 import Data.Time (Day, diffDays)
-import Instrument.Bond
+import Bond
     ( BondDef(..)
     , CouponDef(..)
     )
+import YieldCurve (YieldCurve)
 
 data CashFlow = CashFlow
     { term :: Double
@@ -15,23 +16,26 @@ data CashFlow = CashFlow
     , presentValue :: Double
     } deriving Show
 
-data CashFlows = CashFlows Day Double [CashFlow] deriving Show
+data CashFlows = CashFlows
+    { analysisDate :: Day
+    , principal :: Double
+    , flows :: [CashFlow]
+    } deriving Show
 
-constYEARDAYS :: Double
-constYEARDAYS = 365.24219
-
-calcFlowStream :: BondDef -> Day -> CashFlows
-calcFlowStream bond@BondDef{..} analysisDate =
+calcFlowStream :: BondDef -> Day -> YieldCurve -> CashFlows
+calcFlowStream bond@BondDef{..} analysisDate yieldCurve =
     let
         couponTerms =
             calcTerms bond analysisDate
 
-        flows =
+        undiscountedFlows =
             case couponInfo of
                 Fixed coupon ->
                     calcFixedFlows coupon couponTerms maturityDate analysisDate
                 Floating _ ->
                     undefined
+
+        flows = map ($ 666) undiscountedFlows
     in
         CashFlows analysisDate principal flows
 
@@ -61,7 +65,7 @@ calcTerms
     in
         scanl (-) yearsToLastPayment (replicate numberOfFlows yearsBetweenFlows)
 
-calcFixedFlows :: Double -> [Double] -> Day -> Day -> [CashFlow]
+calcFixedFlows :: Double -> [Double] -> Day -> Day -> [Double -> CashFlow]
 calcFixedFlows coupon couponTerms maturityDate analysisDate =
     let
         yearsToMaturity =
@@ -70,16 +74,16 @@ calcFixedFlows coupon couponTerms maturityDate analysisDate =
         coupons =
             map (const coupon) couponTerms
 
-        presentValues =
-            repeat 667 -- TODO
-
         principalRedemption =
-            CashFlow yearsToMaturity 1 666
+            CashFlow yearsToMaturity 1
 
         couponPayments =
-            zipWith3 CashFlow couponTerms coupons presentValues
+            zipWith CashFlow couponTerms coupons
     in
         principalRedemption : couponPayments
+
+constYEARDAYS :: Double
+constYEARDAYS = 365.24219
 
 dateDelta :: Day -> Day -> Double
 dateDelta date1 date2 =
