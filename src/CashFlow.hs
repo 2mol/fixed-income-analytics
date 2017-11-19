@@ -15,22 +15,28 @@ data CashFlow = CashFlow
     -- , approxFlowDate :: Day
     , nominalAmount :: CashNominal
     , presentValue :: CashPV
-    } deriving Show
+    }
 
 data CashFlows = CashFlows
     { analysisDate :: Day
     , principal :: CashNominal
     , flows :: [CashFlow]
-    } deriving Show
+    }
 
-calcFlowStream :: BondDef -> Day -> YieldCurve -> CashFlows
-calcFlowStream bond@BondDef{..} analysisDate yieldCurve =
+calcCashFlows :: BondDef -> Day -> YieldCurve -> CashFlows
+calcCashFlows bond@BondDef{..} analysisDate yieldCurve =
     let
         couponTerms =
             calcTerms bond analysisDate
 
         flows =
-            calcFlows couponInfo couponTerms maturityDate analysisDate yieldCurve
+            reverse $
+            calcFlowList
+                couponDef
+                couponTerms
+                maturityDate
+                analysisDate
+                yieldCurve
     in
         CashFlows analysisDate principal flows
 
@@ -60,14 +66,14 @@ calcTerms
     in
         scanl (-) yearsToLastPayment (replicate numberOfFlows yearsBetweenFlows)
 
-calcFlows :: CouponDef -> [YearDelta] -> Day -> Day -> YieldCurve -> [CashFlow]
-calcFlows couponInfo couponTerms maturityDate analysisDate yieldCurve =
+calcFlowList :: CouponDef -> [YearDelta] -> Day -> Day -> YieldCurve -> [CashFlow]
+calcFlowList couponDef couponTerms maturityDate analysisDate yieldCurve =
     let
         yearsToMaturity =
             dateDelta analysisDate maturityDate
 
         coupons =
-            case couponInfo of
+            case couponDef of
                 Fixed coupon ->
                     map (const coupon) couponTerms
                 Floating _ ->
@@ -77,7 +83,7 @@ calcFlows couponInfo couponTerms maturityDate analysisDate yieldCurve =
             CashFlow yearsToMaturity 1 666
 
         presentValues =
-            undefined
+            repeat 667
 
         couponPayments =
             zipWith3 CashFlow couponTerms coupons presentValues
@@ -86,6 +92,8 @@ calcFlows couponInfo couponTerms maturityDate analysisDate yieldCurve =
 
 calcFloatingCoupons :: a
 calcFloatingCoupons = undefined
+
+-- small helper functions:
 
 constYEARDAYS :: Double
 constYEARDAYS = 365.24219
@@ -97,6 +105,31 @@ dateDelta date1 date2 =
 calcFlowDay :: Day -> YearDelta -> Day
 calcFlowDay analysisDate term =
     let
-        days = round $ (unYearDelta term) * constYEARDAYS
+        days = round $ unYearDelta term * constYEARDAYS
     in
         addDays days analysisDate
+
+
+-- some show instances
+
+showCashFlow :: Maybe Day -> CashFlow -> String
+showCashFlow mAnalysisDate CashFlow{..} =
+    let
+        nom = show nominalAmount
+        pv = show presentValue
+        t = show term
+        ad =
+            case mAnalysisDate of
+                Nothing -> "?>"
+                Just day -> show day
+    in
+        unwords [ad, t, "~", nom, "~ PV:", pv]
+
+instance Show CashFlow where
+    show = showCashFlow Nothing
+
+instance Show CashFlows where
+    show CashFlows{..} =
+        "\nAnalysis Date: " ++ show analysisDate
+        ++ "\nPrincipal: " ++ show principal
+        ++ "\nFlows:" ++ show flows

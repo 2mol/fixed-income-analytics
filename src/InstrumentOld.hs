@@ -86,8 +86,7 @@ instance Show CashFlows where
     show (CashFlows aDate principal cfs) =
         "\nAnalysis Date: " ++ show aDate
         ++ "\nPrincipal: " ++ show principal
-        ++ "\nFlows:"
-        ++ show cfs
+        ++ "\nFlows:" ++ show cfs
 
 data KeyRateDuration = KeyRateDuration
     { kTerm :: Double

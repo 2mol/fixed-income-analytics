@@ -1,3 +1,0 @@
-InstrumentType,bId,CouponType,Coupon,Frequency,MaturityDate,IssueDate,LastPaymentDate
-Bond,1,fix,0.0125,2,2022/12/31,,
-Bond,2,fix,0,1,2022/12/31,,

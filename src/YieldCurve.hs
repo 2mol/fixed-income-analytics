@@ -2,19 +2,19 @@ module YieldCurve where
 
 import Types
 
-data YieldInfo = YieldInfo
+data YieldData = YieldData
     { tenor :: YearDelta
     , yield :: InterestRate
     } deriving (Show)
 
-type YieldCurve = Double -> Double
+type YieldCurve = YearDelta -> InterestRate
 
-interpolateYieldCurve :: [YieldInfo] -> YieldCurve
-interpolateYieldCurve = undefined
+interpolate :: [YieldData] -> YieldCurve
+interpolate = undefined
 
-calcForwardRates :: [Double] -> YieldCurve -> [Double]
-calcForwardRates couponTerms yieldCurve =
-    undefined
+-- calcForwardRates :: [YearDelta] -> YieldCurve -> [Double]
+-- calcForwardRates couponTerms yieldCurve =
+--     undefined
 
 discount :: CashNominal -> InterestRate -> CashPV
 discount = undefined

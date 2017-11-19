@@ -4,28 +4,35 @@ import Text.Pretty.Simple (pPrint)
 import Data.Time (Day, fromGregorian)
 import Data.Time.Clock (getCurrentTime, utctDay)
 
-import InstrumentOld
-    ( BondDef(..)
-    , CouponDef(..)
-    , calcCashFlows
-    )
+-- import InstrumentOld
+--     ( BondDef(..)
+--     , CouponDef(..)
+--     , calcCashFlows
+--     )
 -- import qualified CsvLoader as C
+import Types
+import Bond (BondDef(..), CouponDef(..))
+import CashFlow (calcCashFlows)
 
-maturityDate :: Day
-maturityDate = fromGregorian 2022 12 31
+mDate :: Day
+mDate = fromGregorian 2022 12 31
 
-analysisDate :: Day
-analysisDate = fromGregorian 2017 11 4
+aDate :: Day
+aDate = fromGregorian 2017 11 4
 
 vanillaBond :: BondDef
 vanillaBond =
     BondDef
-        { bId = 0
-        , couponInfo = Fixed 0.0125
+        { couponDef = Fixed (CashNominal 0.0125)
         , frequency = 2.0
-        , maturity = maturityDate
-        , issue = Nothing
+        , maturityDate = mDate
+        , mIssueDate = Nothing
+        , lastPaymentDate = mDate
+        , principal = 100
         }
+
+fakeYieldCurve :: YearDelta -> InterestRate
+fakeYieldCurve = const (InterestRate 0)
 
 cashFlowTest :: IO ()
 cashFlowTest = do
@@ -33,11 +40,10 @@ cashFlowTest = do
     let today = utctDay now
     putStrLn $ "today is: " ++ show today
     pPrint vanillaBond
-    let cashFlows = calcCashFlows vanillaBond 100 today
+    let cashFlows = calcCashFlows vanillaBond today fakeYieldCurve
     pPrint cashFlows
 
 -- csvTest = C.main
 
 main :: IO ()
-main = do
-    cashFlowTest
+main = cashFlowTest

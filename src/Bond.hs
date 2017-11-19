@@ -14,7 +14,7 @@ data CouponDef = Fixed CashNominal | Floating (Maybe CashNominal)
     deriving Show
 
 data BondDef = BondDef
-    { couponInfo :: CouponDef
+    { couponDef :: CouponDef
     , frequency :: Double
     , maturityDate :: Day
     , mIssueDate :: Maybe Day
@@ -30,10 +30,10 @@ data MinimalBondDef = MinimalBondDef
     } deriving Show
 
 fromList :: [(String, String)] -> BondDef
-fromList = fromMap . M.fromList
+fromList = undefined
 
 fromMap :: Map String String -> BondDef
-fromMap = undefined
+fromMap = fromList . M.toList
 
 fromMinimal :: MinimalBondDef -> BondDef
 fromMinimal = undefined
