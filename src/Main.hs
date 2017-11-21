@@ -23,7 +23,7 @@ aDate = fromGregorian 2017 11 4
 vanillaBond :: BondDef
 vanillaBond =
     BondDef
-        { couponDef = Fixed (CashNominal 0.0125)
+        { couponDef = Fixed (InterestRate 0.0125)
         , frequency = 2.0
         , maturityDate = mDate
         , mIssueDate = Nothing

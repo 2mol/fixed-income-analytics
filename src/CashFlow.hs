@@ -58,8 +58,11 @@ calcTerms
                 Just issueDate ->
                     max (dateDelta analysisDate issueDate) 0
 
+        timeSpan =
+            yearsToLastPayment - firstPaymentLowerBound
+
         numberOfFlows =
-            floor $ unYearDelta (yearsToLastPayment - firstPaymentLowerBound) * frequency
+            floor $ unYearDelta timeSpan * frequency
 
         yearsBetweenFlows =
             YearDelta $ 1 / frequency
@@ -72,23 +75,32 @@ calcFlowList couponDef couponTerms maturityDate analysisDate yieldCurve =
         yearsToMaturity =
             dateDelta analysisDate maturityDate
 
-        coupons =
+        couponPayments =
             case couponDef of
                 Fixed coupon ->
-                    map (const coupon) couponTerms
-                Floating _ ->
-                    calcFloatingCoupons couponTerms yieldCurve
+                    calcFixedCoupons coupon couponTerms
+                    -- map (CashNominal . unInterestRate . const coupon) couponTerms
+                Floating mNextCoupon ->
+                    calcFloatingCoupons mNextCoupon couponTerms yieldCurve
 
         principalRedemption =
             CashFlow yearsToMaturity 1 666
 
-        presentValues =
+        couponPresentValues =
             repeat 667
 
-        couponPayments =
-            zipWith3 CashFlow couponTerms coupons presentValues
+        coupons =
+            zipWith3 CashFlow couponTerms couponPayments couponPresentValues
     in
-        principalRedemption : couponPayments
+        principalRedemption : coupons
+
+calcFixedCoupons :: InterestRate -> [a] -> [CashNominal]
+calcFixedCoupons coupon =
+    let
+        couponAmount =
+            CashNominal $ unInterestRate coupon
+    in
+        map (const couponAmount)
 
 calcFloatingCoupons :: a
 calcFloatingCoupons = undefined
@@ -112,24 +124,33 @@ calcFlowDay analysisDate term =
 
 -- some show instances
 
-showCashFlow :: Maybe Day -> CashFlow -> String
-showCashFlow mAnalysisDate CashFlow{..} =
-    let
-        nom = show nominalAmount
-        pv = show presentValue
-        t = show term
-        ad =
-            case mAnalysisDate of
-                Nothing -> "?>"
-                Just day -> show day
-    in
-        unwords [ad, t, "~", nom, "~ PV:", pv]
+-- data CF =
+--     CF
+--     { d :: Day
+--     , nom :: CashNominal
+--     , pv :: CashPV
+--     } deriving Show
+
+-- showFromCashFlow :: Day -> CashNominal -> CashFlow -> CF
+-- showFromCashFlow ad principal CashFlow{..} =
+--     CF
+--         { d = calcFlowDay ad term
+--         , nom = nominalAmount * principal
+--         , pv = presentValue * CashPV (unCashNominal principal)
+--         }
 
 instance Show CashFlow where
-    show = showCashFlow Nothing
+    show CashFlow{..} =
+        let
+            nom = show nominalAmount
+            pv = show presentValue
+            t = show term
+        in
+            unwords [t, "~", nom, "~ PV:", pv]
 
 instance Show CashFlows where
     show CashFlows{..} =
         "\nAnalysis Date: " ++ show analysisDate
         ++ "\nPrincipal: " ++ show principal
-        ++ "\nFlows:" ++ show flows
+        -- ++ "\nFlows:" ++ show (map (showFromCashFlow analysisDate principal) flows)
+        ++ show flows
