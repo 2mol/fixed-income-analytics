@@ -1,3 +1,12 @@
+Data Sources:
+=============
+
+[Euro Area](https://www.ecb.europa.eu/stats/financial_markets_and_interest_rates/euro_area_yield_curves/html/index.en.html)
+
+[Swiss](https://data.snb.ch/en/topics/ziredev#!/cube/zimoma)
+
+[US](https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=yield)
+
 TODO:
 =====
 

@@ -3,7 +3,7 @@ module YieldCurve where
 import Types
 
 data YieldData = YieldData
-    { tenor :: YearDelta
+    { term :: YearDelta
     , yield :: InterestRate
     } deriving (Show)
 

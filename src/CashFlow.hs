@@ -80,8 +80,8 @@ calcFlowList couponDef couponTerms maturityDate analysisDate yieldCurve =
                 Fixed coupon ->
                     calcFixedCoupons coupon couponTerms
                     -- map (CashNominal . unInterestRate . const coupon) couponTerms
-                Floating mNextCoupon ->
-                    calcFloatingCoupons mNextCoupon couponTerms yieldCurve
+                Floating nextCoupon ->
+                    calcFloatingCoupons nextCoupon couponTerms yieldCurve
 
         principalRedemption =
             CashFlow yearsToMaturity 1 666
@@ -102,8 +102,13 @@ calcFixedCoupons coupon =
     in
         map (const couponAmount)
 
-calcFloatingCoupons :: a
-calcFloatingCoupons = undefined
+calcFloatingCoupons :: InterestRate -> [YearDelta] -> YieldCurve -> [CashNominal]
+calcFloatingCoupons nextCoupon couponTerms yieldCurve =
+    let
+        bla =
+            undefined
+    in
+        undefined
 
 -- small helper functions:
 
@@ -153,4 +158,4 @@ instance Show CashFlows where
         "\nAnalysis Date: " ++ show analysisDate
         ++ "\nPrincipal: " ++ show principal
         -- ++ "\nFlows:" ++ show (map (showFromCashFlow analysisDate principal) flows)
-        ++ show flows
+        ++ "\nFlows:" ++ show flows

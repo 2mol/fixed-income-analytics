@@ -10,7 +10,7 @@ import Data.Map (Map)
 import Data.Time (Day)
 import Types
 
-data CouponDef = Fixed InterestRate | Floating (Maybe InterestRate)
+data CouponDef = Fixed InterestRate | Floating InterestRate
     deriving Show
 
 data BondDef = BondDef
