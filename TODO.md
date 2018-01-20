@@ -11,7 +11,8 @@ TODO:
 =====
 
 - [x] newtype, with derived Num instances instead of current 'type Foo = Double'.
-- [ ] function mkBond, so that Instrument module doesn not expose type constructors.
+- [ ] function mkBond, so that Instrument module does not expose type constructors.
+- [ ] use nice monadic construction for various bond parameter criteria.
 - [x] split last coupon and redemption (simplifies & is more flexible later).
 - [ ] ieee754 float comparisons with Data.AEq (~==)
 - [x] doctest (http://yannesposito.com/Scratch/en/blog/Haskell-Tutorials--a-tutorial/)

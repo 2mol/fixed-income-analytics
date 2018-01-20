@@ -48,26 +48,26 @@ calcTerms
         , mIssueDate = mIssueDate
         }
     analysisDate =
-    let
-        yearsToLastPayment =
-            dateDelta analysisDate lastPaymentDate
+        let
+            yearsToLastPayment =
+                dateDelta analysisDate lastPaymentDate
 
-        firstPaymentLowerBound =
-            case mIssueDate of
-                Nothing -> YearDelta 0
-                Just issueDate ->
-                    max (dateDelta analysisDate issueDate) 0
+            firstPaymentLowerBound =
+                case mIssueDate of
+                    Nothing -> YearDelta 0
+                    Just issueDate ->
+                        max (dateDelta analysisDate issueDate) 0
 
-        timeSpan =
-            yearsToLastPayment - firstPaymentLowerBound
+            timeSpan =
+                yearsToLastPayment - firstPaymentLowerBound
 
-        numberOfFlows =
-            floor $ unYearDelta timeSpan * frequency
+            numberOfFlows =
+                floor $ unYearDelta timeSpan * frequency
 
-        yearsBetweenFlows =
-            YearDelta $ 1 / frequency
-    in
-        scanl (-) yearsToLastPayment (replicate numberOfFlows yearsBetweenFlows)
+            yearsBetweenFlows =
+                YearDelta $ 1 / frequency
+        in
+            scanl (-) yearsToLastPayment (replicate numberOfFlows yearsBetweenFlows)
 
 calcFlowList :: CouponDef -> [YearDelta] -> Day -> Day -> YieldCurve -> [CashFlow]
 calcFlowList couponDef couponTerms maturityDate analysisDate yieldCurve =

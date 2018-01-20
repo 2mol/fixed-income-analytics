@@ -3,24 +3,24 @@ version: '0.0.0.1'
 category: Finance
 author: Juri Chomé
 maintainer: example@example.com
-copyright: 2017 Juri Chomé
+copyright: 2018 Juri Chomé
 license: BSD3
-homepage: https://github.com/talhoffer/fixed-income-analytics#readme
+homepage: https://github.com/2mol/fixed-income-analytics
 extra-source-files:
 - README.md
 
 ghc-options: -Wall
 
 dependencies:
-- base >=4.7 && <5
-- time >=1.6 && <2
-- containers >=0.5 && <1
-- pretty-simple >=2.0 && <3
-- ieee754 >=0.8 && <1
-- cassava >=0.4 && <1
-- bytestring >=0.10 && <1
-- vector >=0.12 && <1
-- yaml >=0.8 && <1
+- base >= 4.7 && < 5
+- time
+- containers
+- pretty-simple
+- ieee754
+- cassava
+- bytestring
+- vector
+- yaml
 
 executables:
   fixed-income-analytics:
@@ -33,5 +33,5 @@ tests:
     source-dirs:
     - test
     dependencies:
-    - doctest >=0.11 && <1
+    - doctest
     - Glob

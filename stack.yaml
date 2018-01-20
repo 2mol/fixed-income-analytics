@@ -1,14 +1,7 @@
-resolver: lts-9.10
+flags: {}
 packages:
 - .
-
+system-ghc: false
 extra-deps: []
-
-# Override default flag values for local packages and extra-deps
-flags: {}
-
-# Control whether we use the GHC we find on the path
-system-ghc: true
-
-# Allow a newer minor version of GHC than the snapshot specifies
 compiler-check: newer-minor
+resolver: lts-10.3
